@@ -1,6 +1,10 @@
 # docker-gc
 
+Docker image garbage collector
+
 ---
+
+![Terminal](./screenshot.png)
 
 ## Running
 
