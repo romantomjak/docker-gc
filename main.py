@@ -1,7 +1,7 @@
+import argparse
+import re
 import subprocess
 import sys
-import re
-import argparse
 
 DOCKER_VERSION = 17
 
@@ -37,7 +37,14 @@ def check_docker_version():
         sys.exit(1)
 
 
-def untag(dry_run, keep):
+def is_excluded(repo, excluded):
+    """Check if repo should be included."""
+    if not excluded:
+        return False
+    return any([r.strip() in repo for r in excluded[0].split(",")])
+
+
+def untag(dry_run, keep, excluded):
     """Leaves only up to 'KEEP' images per repo."""
     stdout = run(["docker", "image", "ls", "--format", "{{.Repository}}  {{.Tag}}"])
 
@@ -48,6 +55,9 @@ def untag(dry_run, keep):
         repo_name, tag = regex.split(line)
 
         if repo_name == '<none>':
+            continue
+
+        if is_excluded("{}:{}".format(repo_name, tag), excluded):
             continue
 
         num_tags = repos.get(repo_name, 0)
@@ -90,13 +100,15 @@ def main():
     parser = argparse.ArgumentParser(description='Docker image garbage collector')
     parser.add_argument('--keep', dest='keep', default=5, metavar="NUM",
                         help='keep up to NUM images (default: %(default)s)')
+    parser.add_argument('--exclude', dest='exclude', nargs='*', type=str, metavar="repo,repo",
+                        help='exclude repos from garbage collection')
     parser.add_argument('--dry-run', dest='dry_run', action='store_true',
                         help='do a dry run without actually deleting anything')
     args = parser.parse_args()
 
     check_docker_version()
 
-    untagged = untag(args.dry_run, int(args.keep))
+    untagged = untag(args.dry_run, int(args.keep), args.exclude)
 
     remove_dangling(args.dry_run, untagged)
 
