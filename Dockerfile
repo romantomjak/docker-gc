@@ -12,7 +12,7 @@ RUN apk --no-cache add curl \
     && tar zxf docker-${DOCKER_VERSION}.tgz \
     && mv $(find -name 'docker' -type f) /usr/local/bin/ \
     && chmod +x /usr/local/bin/docker \
-    && rm -f docker-${DOCKER_VERSION}.tgz
+    && rm -rf docker*
 
 COPY main.py docker-gc
 
